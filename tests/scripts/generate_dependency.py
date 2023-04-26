@@ -101,6 +101,18 @@ class GenTestData(TestDataExplorer):
         """Return if we found target string."""
         return bool(re.match(self.locate_regex, tc_str))
 
+    # @staticmethod
+    # def __check_arguments(tc_str: str) -> bool:
+        # """TODO"""
+        # check = "PSA_KEY_TYPE_AES"
+        # arguments = tc_str.split(":")
+        # print(arguments)
+        # for idx in range(0, len(arguments)):
+            # if arguments[idx] == check:
+                # if len(arguments[idx + 1]) > 32:
+                    # return True
+        # return False
+
     def __append_dep(self, single_test):
         """Return a list of depedencies to be appended."""
         if not single_test:
@@ -128,6 +140,26 @@ class GenTestData(TestDataExplorer):
                 single_test[index + 1] = extra_deps
         return single_test
 
+    # TODO
+    def __remove_dep(self, single_test):
+        """TODO"""
+        if not single_test:
+            return single_test
+        if re.match(self.locate_regex, single_test[0].strip()):
+            if re.match(DEPEND_REGEX, single_test[1].strip()):
+                new_deps = "depends_on"
+                orig_deps = single_test[1].split(':')
+                for o_dep in orig_deps:
+                    if any(o_dep in dep for dep in self.dependencies):
+                        continue
+                    new_deps += ":" + o_dep
+                if new_deps == "depends_on":
+                    single_test[1] = [single_test[0]] + [single_test[2]]
+                else:
+                    single_test[1] = [single_test[0]] + [new_deps + '\n'] +\
+                                     [single_test[2]]
+        return single_test
+
     def __parse_file(self, data_file_name):
         """Parse file and tweak its dependencies based on REGEX rule."""
         if data_file_name is None:
@@ -137,6 +169,7 @@ class GenTestData(TestDataExplorer):
             splitted_test = self.split_test_case(data_file)
             for test_case in splitted_test:
                 file_content += self.__append_dep(test_case) + ['\n']
+                # file_content += self.__remove_dep(test_case) + ['\n']
         self.snippets[data_file_name] = file_content[:-1]
 
     def __write_file(self, data_file_name):
