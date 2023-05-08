@@ -584,36 +584,20 @@ int mbedtls_aes_crypt_ctr(mbedtls_aes_context *ctx,
 #endif /* MBEDTLS_CIPHER_MODE_CTR */
 
 /**
- * \brief           Internal AES block encryption function. This is only
- *                  exposed to allow overriding it using
+ * \brief           Internal AES block encryption and decryption function.
+ *                  This is only exposed to allow overriding it using
  *                  \c MBEDTLS_AES_ENCRYPT_ALT.
  *
- * \param ctx       The AES context to use for encryption.
+ * \param ctx       The AES context to use for encryption or decryption.
  * \param input     The plaintext block.
  * \param output    The output (ciphertext) block.
  *
  * \return          \c 0 on success.
  */
 MBEDTLS_CHECK_RETURN_TYPICAL
-int mbedtls_internal_aes_encrypt(mbedtls_aes_context *ctx,
-                                 const unsigned char input[16],
-                                 unsigned char output[16]);
-
-/**
- * \brief           Internal AES block decryption function. This is only
- *                  exposed to allow overriding it using see
- *                  \c MBEDTLS_AES_DECRYPT_ALT.
- *
- * \param ctx       The AES context to use for decryption.
- * \param input     The ciphertext block.
- * \param output    The output (plaintext) block.
- *
- * \return          \c 0 on success.
- */
-MBEDTLS_CHECK_RETURN_TYPICAL
-int mbedtls_internal_aes_decrypt(mbedtls_aes_context *ctx,
-                                 const unsigned char input[16],
-                                 unsigned char output[16]);
+int mbedtls_internal_aes_crypt(mbedtls_aes_context *ctx, int mode,
+                               const unsigned char input[16],
+                               unsigned char output[16]);
 
 #if defined(MBEDTLS_SELF_TEST)
 /**
