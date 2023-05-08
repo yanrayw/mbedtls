@@ -849,6 +849,24 @@ int mbedtls_aes_xts_setkey_dec(mbedtls_aes_xts_context *ctx,
                AES_RT3(MBEDTLS_BYTE_3(Y0));     \
     } while (0)
 
+static void mbedtls_internal_aes_beginning(const unsigned char input[16],
+                                           uint32_t *RK, uint32_t *X)
+{
+    X[0] = MBEDTLS_GET_UINT32_LE(input,  0); X[0] ^= *RK++;
+    X[1] = MBEDTLS_GET_UINT32_LE(input,  4); X[1] ^= *RK++;
+    X[2] = MBEDTLS_GET_UINT32_LE(input,  8); X[2] ^= *RK++;
+    X[3] = MBEDTLS_GET_UINT32_LE(input, 12); X[3] ^= *RK++;
+}
+
+static void mbedtls_internal_aes_ending(unsigned char output[16],
+                                        uint32_t *X)
+{
+    MBEDTLS_PUT_UINT32_LE(X[0], output,  0);
+    MBEDTLS_PUT_UINT32_LE(X[1], output,  4);
+    MBEDTLS_PUT_UINT32_LE(X[2], output,  8);
+    MBEDTLS_PUT_UINT32_LE(X[3], output, 12);
+}
+
 /*
  * AES-ECB block encryption
  */
@@ -864,10 +882,7 @@ int mbedtls_internal_aes_encrypt(mbedtls_aes_context *ctx,
         uint32_t Y[4];
     } t;
 
-    t.X[0] = MBEDTLS_GET_UINT32_LE(input,  0); t.X[0] ^= *RK++;
-    t.X[1] = MBEDTLS_GET_UINT32_LE(input,  4); t.X[1] ^= *RK++;
-    t.X[2] = MBEDTLS_GET_UINT32_LE(input,  8); t.X[2] ^= *RK++;
-    t.X[3] = MBEDTLS_GET_UINT32_LE(input, 12); t.X[3] ^= *RK++;
+    mbedtls_internal_aes_beginning(input, RK, t.X);
 
     for (i = (ctx->nr >> 1) - 1; i > 0; i--) {
         AES_FROUND(t.Y[0], t.Y[1], t.Y[2], t.Y[3], t.X[0], t.X[1], t.X[2], t.X[3]);
@@ -900,11 +915,7 @@ int mbedtls_internal_aes_encrypt(mbedtls_aes_context *ctx,
              ((uint32_t) FSb[MBEDTLS_BYTE_2(t.Y[1])] << 16) ^
              ((uint32_t) FSb[MBEDTLS_BYTE_3(t.Y[2])] << 24);
 
-    MBEDTLS_PUT_UINT32_LE(t.X[0], output,  0);
-    MBEDTLS_PUT_UINT32_LE(t.X[1], output,  4);
-    MBEDTLS_PUT_UINT32_LE(t.X[2], output,  8);
-    MBEDTLS_PUT_UINT32_LE(t.X[3], output, 12);
-
+    mbedtls_internal_aes_ending(output, t.X);
     mbedtls_platform_zeroize(&t, sizeof(t));
 
     return 0;
@@ -926,10 +937,7 @@ int mbedtls_internal_aes_decrypt(mbedtls_aes_context *ctx,
         uint32_t Y[4];
     } t;
 
-    t.X[0] = MBEDTLS_GET_UINT32_LE(input,  0); t.X[0] ^= *RK++;
-    t.X[1] = MBEDTLS_GET_UINT32_LE(input,  4); t.X[1] ^= *RK++;
-    t.X[2] = MBEDTLS_GET_UINT32_LE(input,  8); t.X[2] ^= *RK++;
-    t.X[3] = MBEDTLS_GET_UINT32_LE(input, 12); t.X[3] ^= *RK++;
+    mbedtls_internal_aes_beginning(input, RK, t.X);
 
     for (i = (ctx->nr >> 1) - 1; i > 0; i--) {
         AES_RROUND(t.Y[0], t.Y[1], t.Y[2], t.Y[3], t.X[0], t.X[1], t.X[2], t.X[3]);
@@ -962,10 +970,7 @@ int mbedtls_internal_aes_decrypt(mbedtls_aes_context *ctx,
              ((uint32_t) RSb[MBEDTLS_BYTE_2(t.Y[1])] << 16) ^
              ((uint32_t) RSb[MBEDTLS_BYTE_3(t.Y[0])] << 24);
 
-    MBEDTLS_PUT_UINT32_LE(t.X[0], output,  0);
-    MBEDTLS_PUT_UINT32_LE(t.X[1], output,  4);
-    MBEDTLS_PUT_UINT32_LE(t.X[2], output,  8);
-    MBEDTLS_PUT_UINT32_LE(t.X[3], output, 12);
+    mbedtls_internal_aes_ending(output, t.X);
 
     mbedtls_platform_zeroize(&t, sizeof(t));
 
