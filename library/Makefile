@@ -77,6 +77,7 @@ endif
 
 OBJS_CRYPTO= \
 	     aes.o \
+	     aes_alt.o \
 	     aesni.o \
 	     aesce.o \
 	     aria.o \
