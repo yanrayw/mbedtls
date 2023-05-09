@@ -919,6 +919,7 @@ int mbedtls_internal_aes_decrypt(mbedtls_aes_context *ctx,
                                  const unsigned char input[16],
                                  unsigned char output[16])
 {
+#if !defined(MBEDTLS_AES_DECRYPT_NOP)
     int i;
     uint32_t *RK = ctx->buf + ctx->rk_offset;
     struct {
@@ -970,6 +971,13 @@ int mbedtls_internal_aes_decrypt(mbedtls_aes_context *ctx,
     mbedtls_platform_zeroize(&t, sizeof(t));
 
     return 0;
+#else
+    (void) ctx;
+    (void) input;
+    (void) output;
+
+    return MBEDTLS_ERR_PLATFORM_FEATURE_UNSUPPORTED;
+#endif /* !MBEDTLS_AES_DECRYPT_NOP */
 }
 #endif /* !MBEDTLS_AES_DECRYPT_ALT */
 
