@@ -105,7 +105,7 @@ class CodeSizeComparison:
     """Compare code size between two Git revisions."""
 
     #pylint: disable=R0913
-    def __init__(self, old_revision, new_revision, result_dir, arch, config):
+    def __init__(self, old_revision, new_revision, result_dir, arch, config, armcc):
         """
         old_revision: revision to compare against
         new_revision:
@@ -122,6 +122,7 @@ class CodeSizeComparison:
         self.new_rev = new_revision
         self.arch = arch
         self.config = config
+        self.armcc = armcc
         self.git_command = "git"
         self.pre_build_commands = PRE_BUILD_CMDS[config]
         self.make_command = self._set_make_command()
@@ -145,18 +146,18 @@ class CodeSizeComparison:
 
         if self.config == 'default':
             if self.arch == 'aarch32':
-                return 'make -j lib CC=armclang \
-                        CFLAGS=\"--target=arm-arm-none-eabi \
+                return 'make -j lib CC=' + self.armcc + \
+                       ' CFLAGS=\"--target=arm-arm-none-eabi \
                             -mcpu=cortex-m33 -Os\" '
             if self.arch == 'aarch64':
-                return 'make -j lib CC=armclang \
-                        CFLAGS=\"--target=aarch64-arm-none-eabi\" '
+                return 'make -j lib CC=' + self.armcc + \
+                       ' CFLAGS=\"--target=aarch64-arm-none-eabi\" '
 
         if self.arch == 'aarch32' and self.config == 'tfm-medium':
             # pylint: disable=C0301
             return \
-                 'make -j lib CC=armclang \
-                  CFLAGS=\'--target=arm-arm-none-eabi -mcpu=cortex-m33 -Os \
+                 'make -j lib CC=' + self.armcc + \
+                 ' CFLAGS=\'--target=arm-arm-none-eabi -mcpu=cortex-m33 -Os \
             -DMBEDTLS_CONFIG_FILE=\\\"../configs/tfm_mbedcrypto_config_profile_medium.h\\\" \
             -DMBEDTLS_PSA_CRYPTO_CONFIG_FILE=\\\"../configs/crypto_config_profile_medium.h\\\" \' '
 
@@ -404,6 +405,10 @@ def main():
         help="optional configuration for Mbed TLS. Default uses current \
               config. Options: full, baremetal, tfm-medium."
     )
+    parser.add_argument(
+        "--armcc", type=str, default="armclang",
+        help="optional: path of armcc / armclang."
+    )
     comp_args = parser.parse_args()
 
     if os.path.isfile(comp_args.result_dir):
@@ -421,7 +426,8 @@ def main():
 
     result_dir = comp_args.result_dir
     size_compare = CodeSizeComparison(old_revision, new_revision, result_dir,
-                                      comp_args.arch, comp_args.config)
+                                      comp_args.arch, comp_args.config,
+                                      comp_args.armcc)
     return_code = size_compare.get_comparision_results()
     sys.exit(return_code)
 
