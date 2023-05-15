@@ -523,6 +523,16 @@
 //#define MBEDTLS_AES_FEWER_TABLES
 
 /**
+ * \def MBEDTLS_AES_DECRYPT_NO_OP
+ *
+ * Enable a no-op decryption function in AES.
+ *
+ * Uncommenting this macro to use a no-op decryption function in AES.
+ * This option reduces the size of AES code by ~4.5kb on v8-M/Thumb2.
+ */
+//#define MBEDTLS_AES_DECRYPT_NO_OP
+
+/**
  * \def MBEDTLS_CAMELLIA_SMALL_MEMORY
  *
  * Use less ROM for the Camellia implementation (saves about 768 bytes).

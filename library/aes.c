@@ -186,6 +186,7 @@ static const uint32_t FT3[256] = { FT };
 /*
  * Reverse S-box
  */
+#if !defined(MBEDTLS_AES_DECRYPT_NO_OP)
 static const unsigned char RSb[256] =
 {
     0x52, 0x09, 0x6A, 0xD5, 0x30, 0x36, 0xA5, 0x38,
@@ -221,6 +222,7 @@ static const unsigned char RSb[256] =
     0x17, 0x2B, 0x04, 0x7E, 0xBA, 0x77, 0xD6, 0x26,
     0xE1, 0x69, 0x14, 0x63, 0x55, 0x21, 0x0C, 0x7D
 };
+#endif
 
 /*
  * Reverse tables
@@ -825,6 +827,7 @@ int mbedtls_aes_xts_setkey_dec(mbedtls_aes_xts_context *ctx,
                AES_FT3(MBEDTLS_BYTE_3(Y2));     \
     } while (0)
 
+#if !defined(MBEDTLS_AES_DECRYPT_NO_OP)
 #define AES_RROUND(X0, X1, X2, X3, Y0, Y1, Y2, Y3)                 \
     do                                                      \
     {                                                       \
@@ -848,6 +851,7 @@ int mbedtls_aes_xts_setkey_dec(mbedtls_aes_xts_context *ctx,
                AES_RT2(MBEDTLS_BYTE_2(Y1)) ^    \
                AES_RT3(MBEDTLS_BYTE_3(Y0));     \
     } while (0)
+#endif /* !MBEDTLS_AES_DECRYPT_NO_OP */
 
 /*
  * AES-ECB block encryption
@@ -919,6 +923,7 @@ int mbedtls_internal_aes_decrypt(mbedtls_aes_context *ctx,
                                  const unsigned char input[16],
                                  unsigned char output[16])
 {
+#if !defined(MBEDTLS_AES_DECRYPT_NO_OP)
     int i;
     uint32_t *RK = ctx->buf + ctx->rk_offset;
     struct {
@@ -970,6 +975,13 @@ int mbedtls_internal_aes_decrypt(mbedtls_aes_context *ctx,
     mbedtls_platform_zeroize(&t, sizeof(t));
 
     return 0;
+#else
+    (void) ctx;
+    (void) input;
+    (void) output;
+
+    return MBEDTLS_ERR_PLATFORM_FEATURE_UNSUPPORTED;
+#endif /* !MBEDTLS_AES_DECRYPT_NO_OP */
 }
 #endif /* !MBEDTLS_AES_DECRYPT_ALT */
 
