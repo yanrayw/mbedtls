@@ -3476,6 +3476,26 @@ component_test_aes_fewer_tables_and_rom_tables () {
     make test
 }
 
+component_test_aes_decrypt_no_op () {
+    msg "build: default config + AES_DECRYPT_NO_OP - CIPHER_MODE_CBC - CIPHER_MODE_XTS - NIST_KW_C"
+    scripts/config.py set MBEDTLS_PSA_CRYPTO_CONFIG
+    scripts/config.py unset MBEDTLS_CIPHER_MODE_CBC
+    scripts/config.py unset MBEDTLS_CIPHER_MODE_XTS
+    scripts/config.py unset MBEDTLS_NIST_KW_C
+
+    echo '#undef PSA_WANT_ALG_CBC_NO_PADDING' >> psa_no_op_dec_config.h
+    echo '#undef PSA_WANT_ALG_CBC_PKCS7' >> psa_no_op_dec_config.h
+    echo '#undef PSA_WANT_ALG_ECB_NO_PADDING' >> psa_no_op_dec_config.h
+
+    make CC=gcc CFLAGS="-Werror -Wall -Wextra -I '$PWD' \
+        -DMBEDTLS_PSA_CRYPTO_USER_CONFIG_FILE='\"psa_no_op_dec_config.h\"'"
+
+    msg "test: default config + AES_DECRYPT_NO_OP - CIPHER_MODE_CBC - CIPHER_MODE_XTS - NIST_KW_C"
+    make test
+
+    rm -f psa_no_op_dec_config.h
+}
+
 component_test_ctr_drbg_aes_256_sha_256 () {
     msg "build: full + MBEDTLS_ENTROPY_FORCE_SHA256 (ASan build)"
     scripts/config.py full
