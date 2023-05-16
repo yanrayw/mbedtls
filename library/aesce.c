@@ -129,7 +129,7 @@ static uint8x16_t aesce_decrypt_block(uint8x16_t block,
                                       unsigned char *keys,
                                       int rounds)
 {
-
+#if !defined(MBEDTLS_AES_DECRYPT_NO_OP)
     for (int i = 0; i < rounds - 1; i++) {
         /* AES AddRoundKey, SubBytes, ShiftRows */
         block = vaesdq_u8(block, vld1q_u8(keys + i * 16));
@@ -156,6 +156,13 @@ static uint8x16_t aesce_decrypt_block(uint8x16_t block,
     block = veorq_u8(block, vld1q_u8(keys + rounds * 16));
 
     return block;
+#else
+    (void) block;
+    (void) keys;
+    (void) rounds;
+
+    return MBEDTLS_ERR_PLATFORM_FEATURE_UNSUPPORTED;
+#endif /* !MBEDTLS_AES_DECRYPT_NO_OP */
 }
 
 /*

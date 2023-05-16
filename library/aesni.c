@@ -89,14 +89,7 @@ int mbedtls_aesni_crypt_ecb(mbedtls_aes_context *ctx,
     ++rk;
     --nr;
 
-    if (mode == 0) {
-        while (nr != 0) {
-            state = _mm_aesdec_si128(state, *rk);
-            ++rk;
-            --nr;
-        }
-        state = _mm_aesdeclast_si128(state, *rk);
-    } else {
+    if (mode == MBEDTLS_AES_ENCRYPT) {
         while (nr != 0) {
             state = _mm_aesenc_si128(state, *rk);
             ++rk;
@@ -104,6 +97,16 @@ int mbedtls_aesni_crypt_ecb(mbedtls_aes_context *ctx,
         }
         state = _mm_aesenclast_si128(state, *rk);
     }
+#if !defined(MBEDTLS_AES_DECRYPT_NO_OP)
+    else {
+        while (nr != 0) {
+            state = _mm_aesdec_si128(state, *rk);
+            ++rk;
+            --nr;
+        }
+        state = _mm_aesdeclast_si128(state, *rk);
+    }
+#endif
 
     memcpy(output, &state, 16);
     return 0;
@@ -449,6 +452,7 @@ int mbedtls_aesni_crypt_ecb(mbedtls_aes_context *ctx,
          AESENCLAST(xmm1_xmm0)            // last round
          "jmp       3f              \n\t"
 
+#if !defined(MBEDTLS_AES_DECRYPT_NO_OP)
          "2:                        \n\t" // decryption loop
          "movdqu    (%1), %%xmm1    \n\t"
          AESDEC(xmm1_xmm0)                // do round
@@ -457,6 +461,7 @@ int mbedtls_aesni_crypt_ecb(mbedtls_aes_context *ctx,
          "jnz       2b              \n\t"
          "movdqu    (%1), %%xmm1    \n\t" // load round key
          AESDECLAST(xmm1_xmm0)            // last round
+#endif
 
          "3:                        \n\t"
          "movdqu    %%xmm0, (%4)    \n\t" // export output
