@@ -189,7 +189,7 @@ exit:
 }
 /* END_CASE */
 
-/* BEGIN_CASE depends_on:MBEDTLS_AES_C */
+/* BEGIN_CASE depends_on:MBEDTLS_AES_C:!MBEDTLS_AES_DECRYPT_NO_OP */
 void nist_kw_ciphertext_lengths(int in_len, int out_len, int mode, int res)
 {
     mbedtls_nist_kw_context ctx;
