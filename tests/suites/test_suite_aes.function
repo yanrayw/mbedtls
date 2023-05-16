@@ -204,7 +204,7 @@ exit:
 }
 /* END_CASE */
 
-/* BEGIN_CASE depends_on:MBEDTLS_CIPHER_MODE_XTS */
+/* BEGIN_CASE depends_on:MBEDTLS_CIPHER_MODE_XTS:!MBEDTLS_AES_DECRYPT_NO_OP */
 void aes_decrypt_xts(char *hex_key_string, char *hex_data_unit_string,
                      char *hex_dst_string, char *hex_src_string)
 {
