@@ -567,6 +567,13 @@ int mbedtls_nist_kw_self_test(int verbose)
             mbedtls_printf("  KW-AES-%u ", (unsigned int) key_len[i] * 8);
         }
 
+#if defined(MBEDTLS_AES_DECRYPT_NO_OP)
+        if (verbose != 0) {
+            mbedtls_printf("skipped\n");
+        }
+        continue;
+#endif
+
         ret = mbedtls_nist_kw_setkey(&ctx, MBEDTLS_CIPHER_ID_AES,
                                      kw_key[i], key_len[i] * 8, 1);
         if (ret != 0) {
@@ -622,6 +629,13 @@ int mbedtls_nist_kw_self_test(int verbose)
         if (verbose != 0) {
             mbedtls_printf("  KWP-AES-%u ", (unsigned int) key_len[i] * 8);
         }
+
+#if defined(MBEDTLS_AES_DECRYPT_NO_OP)
+        if (verbose != 0) {
+            mbedtls_printf("skipped\n");
+        }
+        continue;
+#endif
 
         ret = mbedtls_nist_kw_setkey(&ctx, MBEDTLS_CIPHER_ID_AES, kwp_key[i],
                                      key_len[i] * 8, 1);
