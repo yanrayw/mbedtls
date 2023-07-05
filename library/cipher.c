@@ -234,11 +234,11 @@ int mbedtls_cipher_setup_psa(mbedtls_cipher_context_t *ctx,
 
     /* Check that the underlying cipher mode and cipher type are
      * supported by the underlying PSA Crypto implementation. */
-    alg = mbedtls_psa_translate_cipher_mode(((mbedtls_cipher_mode_t) cipher_info->mode), taglen);
+    alg = mbedtls_psa_translate_cipher_mode(mbedtls_cipher_info_get_mode(cipher_info), taglen);
     if (alg == 0) {
         return MBEDTLS_ERR_CIPHER_FEATURE_UNAVAILABLE;
     }
-    if (mbedtls_psa_translate_cipher_type(((mbedtls_cipher_type_t) cipher_info->type)) == 0) {
+    if (mbedtls_psa_translate_cipher_type(mbedtls_cipher_info_get_type(cipher_info->type))) == 0) {
         return MBEDTLS_ERR_CIPHER_FEATURE_UNAVAILABLE;
     }
 
@@ -291,7 +291,7 @@ int mbedtls_cipher_setkey(mbedtls_cipher_context_t *ctx,
         }
 
         key_type = mbedtls_psa_translate_cipher_type(
-            ((mbedtls_cipher_type_t) ctx->cipher_info->type));
+            (mbedtls_cipher_info_get_type(ctx->cipher_info)));
         if (key_type == 0) {
             return MBEDTLS_ERR_CIPHER_FEATURE_UNAVAILABLE;
         }
@@ -390,7 +390,7 @@ int mbedtls_cipher_set_iv(mbedtls_cipher_context_t *ctx,
     }
 
 #if defined(MBEDTLS_CHACHA20_C)
-    if (((mbedtls_cipher_type_t) ctx->cipher_info->type) == MBEDTLS_CIPHER_CHACHA20) {
+    if (mbedtls_cipher_info_get_type(ctx->cipher_info) == MBEDTLS_CIPHER_CHACHA20) {
         /* Even though the actual_iv_size is overwritten with a correct value
          * of 12 from the cipher info, return an error to indicate that
          * the input iv_len is wrong. */
@@ -405,7 +405,7 @@ int mbedtls_cipher_set_iv(mbedtls_cipher_context_t *ctx,
         }
     }
 #if defined(MBEDTLS_CHACHAPOLY_C)
-    if (((mbedtls_cipher_type_t) ctx->cipher_info->type) == MBEDTLS_CIPHER_CHACHA20_POLY1305 &&
+    if (mbedtls_cipher_info_get_type(ctx->cipher_info) == MBEDTLS_CIPHER_CHACHA20_POLY1305 &&
         iv_len != 12) {
         return MBEDTLS_ERR_CIPHER_BAD_INPUT_DATA;
     }
@@ -498,7 +498,7 @@ int mbedtls_cipher_update_ad(mbedtls_cipher_context_t *ctx,
 #endif
 
 #if defined(MBEDTLS_CHACHAPOLY_C)
-    if (MBEDTLS_CIPHER_CHACHA20_POLY1305 == ((mbedtls_cipher_type_t) ctx->cipher_info->type)) {
+    if (MBEDTLS_CIPHER_CHACHA20_POLY1305 == mbedtls_cipher_info_get_type(ctx->cipher_info)) {
         int result;
         mbedtls_chachapoly_mode_t mode;
 
@@ -580,7 +580,7 @@ int mbedtls_cipher_update(mbedtls_cipher_context_t *ctx, const unsigned char *in
 #endif
 
 #if defined(MBEDTLS_CHACHAPOLY_C)
-    if (((mbedtls_cipher_type_t) ctx->cipher_info->type) == MBEDTLS_CIPHER_CHACHA20_POLY1305) {
+    if (mbedtls_cipher_info_get_type(ctx->cipher_info) == MBEDTLS_CIPHER_CHACHA20_POLY1305) {
         *olen = ilen;
         return mbedtls_chachapoly_update((mbedtls_chachapoly_context *) ctx->cipher_ctx,
                                          ilen, input, output);
@@ -977,8 +977,8 @@ int mbedtls_cipher_finish(mbedtls_cipher_context_t *ctx,
         return 0;
     }
 
-    if ((MBEDTLS_CIPHER_CHACHA20          == ((mbedtls_cipher_type_t) ctx->cipher_info->type)) ||
-        (MBEDTLS_CIPHER_CHACHA20_POLY1305 == ((mbedtls_cipher_type_t) ctx->cipher_info->type))) {
+    if ((MBEDTLS_CIPHER_CHACHA20          == mbedtls_cipher_info_get_type(ctx->cipher_info)) ||
+        (MBEDTLS_CIPHER_CHACHA20_POLY1305 == mbedtls_cipher_info_get_type(ctx->cipher_info))) {
         return 0;
     }
 
@@ -1139,7 +1139,7 @@ int mbedtls_cipher_write_tag(mbedtls_cipher_context_t *ctx,
 #endif
 
 #if defined(MBEDTLS_CHACHAPOLY_C)
-    if (MBEDTLS_CIPHER_CHACHA20_POLY1305 == ((mbedtls_cipher_type_t) ctx->cipher_info->type)) {
+    if (MBEDTLS_CIPHER_CHACHA20_POLY1305 == mbedtls_cipher_info_get_type(ctx->cipher_info)) {
         /* Don't allow truncated MAC for Poly1305 */
         if (tag_len != 16U) {
             return MBEDTLS_ERR_CIPHER_BAD_INPUT_DATA;
@@ -1205,7 +1205,7 @@ int mbedtls_cipher_check_tag(mbedtls_cipher_context_t *ctx,
 #endif /* MBEDTLS_GCM_C */
 
 #if defined(MBEDTLS_CHACHAPOLY_C)
-    if (MBEDTLS_CIPHER_CHACHA20_POLY1305 == ((mbedtls_cipher_type_t) ctx->cipher_info->type)) {
+    if (MBEDTLS_CIPHER_CHACHA20_POLY1305 == mbedtls_cipher_info_get_type(ctx->cipher_info)) {
         /* Don't allow truncated MAC for Poly1305 */
         if (tag_len != sizeof(check_tag)) {
             return MBEDTLS_ERR_CIPHER_BAD_INPUT_DATA;
@@ -1387,7 +1387,7 @@ static int mbedtls_cipher_aead_encrypt(mbedtls_cipher_context_t *ctx,
     }
 #endif /* MBEDTLS_CCM_C */
 #if defined(MBEDTLS_CHACHAPOLY_C)
-    if (MBEDTLS_CIPHER_CHACHA20_POLY1305 == ((mbedtls_cipher_type_t) ctx->cipher_info->type)) {
+    if (MBEDTLS_CIPHER_CHACHA20_POLY1305 == mbedtls_cipher_info_get_type(ctx->cipher_info)) {
         /* ChachaPoly has fixed length nonce and MAC (tag) */
         if ((iv_len != mbedtls_cipher_info_get_iv_size(ctx->cipher_info)) ||
             (tag_len != 16U)) {
@@ -1481,7 +1481,7 @@ static int mbedtls_cipher_aead_decrypt(mbedtls_cipher_context_t *ctx,
     }
 #endif /* MBEDTLS_CCM_C */
 #if defined(MBEDTLS_CHACHAPOLY_C)
-    if (MBEDTLS_CIPHER_CHACHA20_POLY1305 == ((mbedtls_cipher_type_t) ctx->cipher_info->type)) {
+    if (MBEDTLS_CIPHER_CHACHA20_POLY1305 == mbedtls_cipher_info_get_type(ctx->cipher_info)) {
         int ret = MBEDTLS_ERR_ERROR_CORRUPTION_DETECTED;
 
         /* ChachaPoly has fixed length nonce and MAC (tag) */
