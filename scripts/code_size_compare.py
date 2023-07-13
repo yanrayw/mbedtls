@@ -223,28 +223,41 @@ class CodeSizeBase:
             self,
             old_rev: str,
             new_rev: str,
+            markdown: bool,
             output: typing_util.Writable
     ) -> None:
         """Write comparison result into a file.
 
         Writing Format: file_name current(total) old(total) change(Byte) change_pct(%)
         """
-        output.write("{:<30} {:>7} {:>7} {:>7} {:>7}\n"
-                     .format("filename", "current", "old", "change", "change%"))
+        if markdown:
+            output.write("|{:<30} | {:>7} | {:>7} | {:>7} | {:>7} |\n"
+                    .format("filename", "current", "old", "change", "change%"))
+            output.write("|{:<30} | {:>7} | {:>7} | {:>7} | {:>7} |\n"
+                    .format("------:", "------:", "------:", "------:", "------:"))
+        else:
+            output.write("{:<30} {:>7} {:>7} {:>7} {:>7}\n"
+                    .format("filename", "current", "old", "change", "change%"))
         for mod, fname, size_entry in self._size_reader_helper(new_rev, output):
             new_size = int(size_entry.total)
             # check if we have the file in old revision
             if fname in self.code_size[old_rev][mod]:
                 old_size = int(self.code_size[old_rev][mod][fname].total)
                 change = new_size - old_size
+                if markdown and 0 == change:
+                    continue
                 if old_size != 0:
                     change_pct = change / old_size
                 else:
                     change_pct = 0
-                output.write("{:<30} {:>7} {:>7} {:>7} {:>7.2%}\n"
-                             .format(fname, new_size, old_size, change, change_pct))
+                if markdown:
+                    output.write("|{:<30} | {:>7} | {:>7} | {:>7} | {:>7.2%} |\n"
+                            .format(fname, new_size, old_size, change, change_pct))
+                else:
+                    output.write("|{:<30} {:>7} {:>7} {:>7} {:>7.2%}\n"
+                            .format(fname, new_size, old_size, change, change_pct))
             else:
-                output.write("{} {}\n".format(fname, new_size))
+                output.write("{:<30} {:>7}\n".format(fname, new_size))
 
 
 class CodeSizeComparison(CodeSizeBase):
@@ -255,12 +268,14 @@ class CodeSizeComparison(CodeSizeBase):
             old_revision: str,
             new_revision: str,
             result_dir: str,
+            markdown: bool,
             code_size_info: CodeSizeInfo
     ) -> None:
         """
         old_revision: revision to compare against.
         new_revision:
         result_dir: directory for comparison result.
+        markdown: output comparision of code size in a markdown format.
         code_size_info: an object containing information to build library.
         """
         super().__init__()
@@ -275,6 +290,7 @@ class CodeSizeComparison(CodeSizeBase):
         self.new_rev = new_revision
         self.git_command = "git"
         self.make_clean = 'make clean'
+        self.markdown = markdown
         self.make_command = code_size_info.make_command
         self.fname_suffix = "-" + code_size_info.arch + "-" +\
                             code_size_info.config
@@ -380,7 +396,8 @@ class CodeSizeComparison(CodeSizeBase):
 
         print("\nGenerating comparison results between",\
                 self.old_rev, "and", self.new_rev)
-        self.write_comparison(self.old_rev, self.new_rev, res_file)
+        self.write_comparison(self.old_rev, self.new_rev, self.markdown,
+                res_file)
 
         return 0
 
@@ -436,6 +453,10 @@ def main():
         choices=list(map(lambda s: s.value, SupportedConfig)),
         help="specify configuration type for code size comparison,\
               default is the current MbedTLS configuration.")
+    group_optional.add_argument(
+        "--markdown", action="store_true", default=False,
+        help="Output comparision of code size in a markdown format\
+              (only show the files that have changed).")
     comp_args = parser.parse_args()
 
     if os.path.isfile(comp_args.result_dir):
@@ -457,7 +478,7 @@ def main():
           .format(code_size_info.arch, code_size_info.config))
     result_dir = comp_args.result_dir
     size_compare = CodeSizeComparison(old_revision, new_revision, result_dir,
-                                      code_size_info)
+                                      comp_args.markdown, code_size_info)
     return_code = size_compare.get_comparision_results()
     sys.exit(return_code)
 
